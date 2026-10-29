@@ -1,0 +1,56 @@
+# SpaceLens
+
+用矩形树图查看磁盘空间与进程占用的 Windows 桌面工具。
+
+[下载最新版](https://github.com/ErePasser3183/SpaceLens/releases/latest) · [快捷键](docs/使用说明.md)
+
+## 下载
+
+- **SpaceLens-win-Setup.exe**：安装版。
+- **SpaceLens-win-Portable.zip**：解压后运行最外层的 `SpaceLens.exe`，请保留完整文件夹。
+
+两种版本都自带运行环境，支持 Windows x64。
+
+## 功能
+
+- 任务管理器：程序分组、内存 / CPU 树图、搜索与进程列表、右键结束进程。
+- 磁盘空间：实时扫描、目录展开与导航、大文件筛选、文件变化监听。
+- 内存优化：检测内存不足后按需整理，保留待机缓存。
+- 浅色 / 深色 / 跟随系统主题。
+
+## 自动更新
+
+在齿轮设置中开关 **自动更新**，也可点击 **检查更新**。
+
+默认开启；启动后后台检查，此后每四小时检查一次。从本仓库的正式 Releases 下载并校验更新包，使用中不强制重启。关闭程序后静默替换，下次打开使用新版。关闭自动更新会取消当前自动下载及待应用更新；手动检查仍可下载。网络失败不影响使用，可稍后重试。
+
+不要单独移动便携包的 `current/SpaceLens.exe`。更新设置保存在当前用户的本地应用数据目录，升级后保留。
+
+## 开发
+
+Windows x64、.NET 9 SDK。SDK 版本见 `global.json`。
+
+```powershell
+./setup.ps1
+./build.ps1 -Test
+./run.ps1
+```
+
+`build.ps1` 生成开发用单文件程序；正式更新包使用：
+
+```powershell
+./package.ps1 -Version 1.1.0
+```
+
+产物位于 `dist/Releases/`。推送 `v主版本.次版本.修订号` 标签后，GitHub Actions 会测试、打包并发布新版本。正式包必须保留同一应用 ID 和更新通道。
+
+| 模块 | 用途 |
+| --- | --- |
+| SpaceLens.App | WPF 界面 |
+| SpaceLens.Core | 磁盘扫描、查询与树图布局 |
+| SpaceLens.Tasks | 进程采样及内存优化 |
+| SpaceLens.Updates | 自动更新与设置保存 |
+
+磁盘统计为逻辑字节数，跳过目录链接与不可读项目，与系统实际分配空间可能不同。进程共享内存可能重复计入，进程总和不等于整机占用。内存整理不保证提升性能。
+
+内存优化功能参考了龙腾猫跃的 PCL2 启动器中的相关功能。自动更新使用 Velopack。详见 [第三方参考](docs/第三方参考.md) 和 [开发说明](docs/开发说明.md)。

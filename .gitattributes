@@ -1,0 +1,2 @@
+# Keep the archived source bytes unchanged across Windows checkouts.
+* -text

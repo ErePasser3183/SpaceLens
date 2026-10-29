@@ -1,0 +1,8 @@
+**/bin/
+**/obj/
+.vs/
+dist/
+artifacts/
+archives/
+*.lnk
+*.user

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType><TargetFramework>net9.0-windows</TargetFramework><UseWPF>true</UseWPF>
+    <AssemblyName>SpaceLens</AssemblyName><RootNamespace>SpaceLens.App</RootNamespace>
+    <Version>1.1.0</Version><ApplicationManifest>app.manifest</ApplicationManifest>
+    <StartupObject>SpaceLens.App.App</StartupObject>
+    <Product>SpaceLens</Product><Title>SpaceLens</Title>
+    <ApplicationIcon>Assets\SpaceLens.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="..\SpaceLens.Core\SpaceLens.Core.csproj"/><ProjectReference Include="..\SpaceLens.Tasks\SpaceLens.Tasks.csproj"/><Resource Include="Assets\SpaceLens.ico"/></ItemGroup>
+  <ItemGroup><ProjectReference Include="..\SpaceLens.Updates\SpaceLens.Updates.csproj"/><ApplicationDefinition Remove="App.xaml"/><Page Include="App.xaml"/></ItemGroup>
+</Project>

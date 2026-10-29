@@ -1,0 +1,44 @@
+<UserControl x:Class="SpaceLens.App.TaskManagerView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:SpaceLens.App" Background="{DynamicResource WindowBg}">
+ <Grid>
+  <Grid.RowDefinitions><RowDefinition Height="44"/><RowDefinition Height="42"/><RowDefinition Height="*"/><RowDefinition Height="27"/></Grid.RowDefinitions>
+  <Grid Margin="8,3,8,4"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <StackPanel Orientation="Horizontal">
+    <Button x:Name="TaskSettingsButton" Content="&#xE713;" FontFamily="Segoe MDL2 Assets" ToolTip="设置" Click="SettingsClick" Style="{StaticResource IconButton}"/><Separator Style="{StaticResource ToolSeparator}"/>
+    <Button x:Name="TaskBack" Content="&#xE72B;" FontFamily="Segoe MDL2 Assets" ToolTip="后退 · Alt+←" Click="BackClick" Style="{StaticResource IconButton}" IsEnabled="False"/>
+    <Button x:Name="TaskForward" Content="&#xE72A;" FontFamily="Segoe MDL2 Assets" ToolTip="前进 · Alt+→" Click="ForwardClick" Style="{StaticResource IconButton}" IsEnabled="False"/>
+    <Button x:Name="TaskUp" Content="&#xE74A;" FontFamily="Segoe MDL2 Assets" ToolTip="全部进程 · Alt+↑" Click="RootClick" Style="{StaticResource IconButton}" IsEnabled="False"/>
+    <Button Content="&#xE80F;" FontFamily="Segoe MDL2 Assets" ToolTip="全部进程 · Alt+Home" Click="RootClick" Style="{StaticResource IconButton}"/>
+    <Button Content="&#xE72C;" FontFamily="Segoe MDL2 Assets" ToolTip="立即刷新 · F5" Click="RefreshClick" Style="{StaticResource IconButton}"/>
+    <Separator Style="{StaticResource ToolSeparator}"/>
+    <Button Content="−" ToolTip="只显示程序" Click="LessClick" Style="{StaticResource IconButton}"/>
+    <TextBlock x:Name="TaskDepth" Text="1 层" Margin="3,0" Foreground="{DynamicResource Muted}"/>
+    <Button Content="＋" ToolTip="展开到进程" Click="MoreClick" Style="{StaticResource IconButton}"/>
+   </StackPanel>
+   <TextBox x:Name="TaskLocation" Grid.Column="1" Text="本机进程" IsReadOnly="True" Margin="8,0,0,0" ToolTip="按同名程序分组；双击程序查看所属进程"/>
+   <Button x:Name="TaskOptimizeMemory" Grid.Column="2" Content="内存优化" Click="OptimizeMemoryClick" ToolTip="检查内存状态，内存不足时执行优化；需要时请求管理员权限" Margin="6,0,0,0" Style="{StaticResource Primary}"/>
+  </Grid>
+  <Grid Grid.Row="1" Margin="9,2,9,6"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <TextBlock Text="筛选" Foreground="{DynamicResource Muted}" Margin="0,0,9,0"/>
+   <Grid Grid.Column="1" Margin="0,0,7,0">
+    <TextBox x:Name="TaskSearch" TextChanged="SearchChanged" ToolTip="程序名或 PID · Ctrl+F"/>
+    <TextBlock Text="程序名 / PID" Margin="14,0,14,2" VerticalAlignment="Center" Foreground="{DynamicResource Muted}" IsHitTestVisible="False"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=TaskSearch}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+   </Grid>
+   <Button x:Name="TaskListButton" Grid.Column="3" Margin="7,0,0,0" Content="&#xE8FD;" FontFamily="Segoe MDL2 Assets" ToolTip="显示 / 隐藏进程列表 · F8" Click="ListClick" Style="{StaticResource IconButton}"/>
+   <ComboBox x:Name="TaskMetric" Grid.Column="2" Width="166" SelectedIndex="0" SelectionChanged="MetricChanged" ToolTip="方块面积对应所选指标；CPU 按整机总算力计算"><ComboBoxItem>内存占用</ComboBoxItem><ComboBoxItem>CPU 占用</ComboBoxItem></ComboBox>
+  </Grid>
+  <Grid Grid.Row="2" Margin="3,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" MinWidth="300"/><ColumnDefinition x:Name="TaskDividerWidth" Width="0"/><ColumnDefinition x:Name="TaskListWidth" Width="0"/></Grid.ColumnDefinitions>
+   <Border Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="1"><Grid><Grid.RowDefinitions><RowDefinition Height="20"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <Border Background="{DynamicResource SurfaceAlt}"><DockPanel Margin="7,0"><TextBlock x:Name="TaskMapCaption" FontSize="11"/><TextBlock x:Name="TaskMetricCaption" Text="内存占用" HorizontalAlignment="Right" Foreground="{DynamicResource Muted}" FontSize="11"/></DockPanel></Border>
+    <local:TreemapView x:Name="TaskMap" Grid.Row="1" ClipToBounds="True"/>
+    <TextBlock x:Name="TaskEmpty" Grid.Row="1" Text="正在读取进程…" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Muted}"/>
+   </Grid></Border>
+   <GridSplitter x:Name="TaskDivider" Grid.Column="1" Width="5" HorizontalAlignment="Center" Background="Transparent" Visibility="Collapsed"/>
+   <Border x:Name="TaskListPanel" Grid.Column="2" Visibility="Collapsed" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="1">
+    <DataGrid x:Name="TaskList" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource Line}" BorderThickness="0" Background="{DynamicResource Surface}" SelectionMode="Single" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" CanUserReorderColumns="False" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.VirtualizationMode="Recycling" SelectionChanged="SelectionChanged" PreviewMouseRightButtonDown="ListRightClick">
+     <DataGrid.Columns><DataGridTextColumn Header="进程" Binding="{Binding Group}" Width="*"/><DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="65"/><DataGridTextColumn Header="内存占用" Binding="{Binding MemoryText}" Width="155"/><DataGridTextColumn Header="CPU" Binding="{Binding Cpu}" Width="70"/></DataGrid.Columns>
+    </DataGrid>
+   </Border>
+  </Grid>
+  <Border Grid.Row="3" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0"><DockPanel Margin="8,0"><TextBlock x:Name="TaskRefreshState" DockPanel.Dock="Right" FontSize="11" Foreground="{DynamicResource Muted}"/><TextBlock x:Name="TaskStatus" FontSize="11" TextTrimming="CharacterEllipsis"/></DockPanel></Border>
+ </Grid>
+</UserControl>

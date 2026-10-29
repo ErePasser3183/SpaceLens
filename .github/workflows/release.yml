@@ -1,0 +1,26 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Test
+        shell: pwsh
+        run: dotnet run --project tests/SpaceLens.Tests -c Release
+      - name: Package
+        shell: pwsh
+        run: ./package.ps1 -Version $env:GITHUB_REF_NAME.Substring(1)
+      - name: Publish release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create $env:GITHUB_REF_NAME (Get-ChildItem dist/Releases -File | ForEach-Object FullName) --title "SpaceLens $env:GITHUB_REF_NAME" --generate-notes --verify-tag
