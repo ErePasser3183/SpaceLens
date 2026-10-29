@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>SpaceLens-win-Setup</AssemblyName>
+    <Version>1.1.1</Version>
+    <Product>SpaceLens</Product>
+    <ApplicationIcon>../SpaceLens.App/Assets/SpaceLens.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <EmbeddedResource Include="$(SetupPayload)" LogicalName="SpaceLens.Setup.exe" Condition="'$(SetupPayload)' != ''" />
+  </ItemGroup>
+</Project>

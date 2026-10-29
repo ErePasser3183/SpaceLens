@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpaceLens.Tasks", "src\Spac
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpaceLens.Updates", "src\SpaceLens.Updates\SpaceLens.Updates.csproj", "{E5A8BEF2-6762-4758-96A0-B7FF7B6ABACF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpaceLens.Installer", "src\SpaceLens.Installer\SpaceLens.Installer.csproj", "{4DE6A142-0781-41A1-BFC7-220CD0C7735A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -85,6 +87,18 @@ Global
 		{E5A8BEF2-6762-4758-96A0-B7FF7B6ABACF}.Release|x64.Build.0 = Release|Any CPU
 		{E5A8BEF2-6762-4758-96A0-B7FF7B6ABACF}.Release|x86.ActiveCfg = Release|Any CPU
 		{E5A8BEF2-6762-4758-96A0-B7FF7B6ABACF}.Release|x86.Build.0 = Release|Any CPU
+		{4DE6A142-0781-41A1-BFC7-220CD0C7735A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DE6A142-0781-41A1-BFC7-220CD0C7735A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DE6A142-0781-41A1-BFC7-220CD0C7735A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4DE6A142-0781-41A1-BFC7-220CD0C7735A}.Debug|x64.Build.0 = Debug|Any CPU
+		{4DE6A142-0781-41A1-BFC7-220CD0C7735A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4DE6A142-0781-41A1-BFC7-220CD0C7735A}.Debug|x86.Build.0 = Debug|Any CPU
+		{4DE6A142-0781-41A1-BFC7-220CD0C7735A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DE6A142-0781-41A1-BFC7-220CD0C7735A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DE6A142-0781-41A1-BFC7-220CD0C7735A}.Release|x64.ActiveCfg = Release|Any CPU
+		{4DE6A142-0781-41A1-BFC7-220CD0C7735A}.Release|x64.Build.0 = Release|Any CPU
+		{4DE6A142-0781-41A1-BFC7-220CD0C7735A}.Release|x86.ActiveCfg = Release|Any CPU
+		{4DE6A142-0781-41A1-BFC7-220CD0C7735A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -95,5 +109,6 @@ Global
 		{3E4D814D-234C-4E98-B3CE-F3575172C526} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{C3542A6F-F2AC-41C3-9B25-B48BBACE6319} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{E5A8BEF2-6762-4758-96A0-B7FF7B6ABACF} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{4DE6A142-0781-41A1-BFC7-220CD0C7735A} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

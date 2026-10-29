@@ -6,7 +6,7 @@
 
 ## 下载
 
-- **SpaceLens-win-Setup.exe**：安装版。
+- **SpaceLens-win-Setup.exe**：安装版，打开后选择安装目录，再点击“安装”。
 - **SpaceLens-win-Portable.zip**：解压后运行最外层的 `SpaceLens.exe`，请保留完整文件夹。
 
 两种版本都自带运行环境，支持 Windows x64。
@@ -39,7 +39,7 @@ Windows x64、.NET 9 SDK。SDK 版本见 `global.json`。
 `build.ps1` 生成开发用单文件程序；正式更新包使用：
 
 ```powershell
-./package.ps1 -Version 1.1.0
+./package.ps1 -Version 1.1.1
 ```
 
 产物位于 `dist/Releases/`。推送 `v主版本.次版本.修订号` 标签后，GitHub Actions 会测试、打包并发布新版本。正式包必须保留同一应用 ID 和更新通道。
@@ -50,6 +50,7 @@ Windows x64、.NET 9 SDK。SDK 版本见 `global.json`。
 | SpaceLens.Core | 磁盘扫描、查询与树图布局 |
 | SpaceLens.Tasks | 进程采样及内存优化 |
 | SpaceLens.Updates | 自动更新与设置保存 |
+| SpaceLens.Installer | 安装窗口与目录选择 |
 
 磁盘统计为逻辑字节数，跳过目录链接与不可读项目，与系统实际分配空间可能不同。进程共享内存可能重复计入，进程总和不等于整机占用。内存整理不保证提升性能。
 
