@@ -42,7 +42,6 @@ public partial class TaskManagerView
 
     private static string FormatMemoryResult(MemoryOptimizationResult result)
     {
-        if (result.Skipped) return "未检测到内存不足，已跳过优化";
         string available = result.After is { } after ? $" · 当前可用 {DisplayFormat.Size((long)after.Available)}" : "";
         string change = result.AvailableChange is { } delta
             ? delta == 0 ? " · 可用内存无变化" : $" · 可用内存{(delta > 0 ? "增加" : "减少")} {DisplayFormat.Size(Math.Abs(delta))}"

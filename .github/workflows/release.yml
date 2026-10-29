@@ -18,6 +18,15 @@ jobs:
       - name: Package
         shell: pwsh
         run: ./package.ps1 -Version $env:GITHUB_REF_NAME.Substring(1)
+      - name: Verify packaged UI
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME.Substring(1)
+          foreach ($mode in @('startup', 'deletion', 'tasks', 'menus')) {
+            $output = Join-Path $PWD "artifacts/verify-$mode"
+            $app = Start-Process "artifacts/package/$version/SpaceLens.exe" -ArgumentList "--verify-$mode", ('"' + $output + '"') -WindowStyle Hidden -Wait -PassThru
+            if ($app.ExitCode -ne 0 -or (Get-ChildItem $output -Filter '*failure*')) { throw "$mode verification failed" }
+          }
       - name: Publish release
         shell: pwsh
         env:

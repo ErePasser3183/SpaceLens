@@ -15,7 +15,7 @@
     <Button Content="＋" ToolTip="展开到进程" Click="MoreClick" Style="{StaticResource IconButton}"/>
    </StackPanel>
    <TextBox x:Name="TaskLocation" Grid.Column="1" Text="本机进程" IsReadOnly="True" Margin="8,0,0,0" ToolTip="按同名程序分组；双击程序查看所属进程"/>
-   <Button x:Name="TaskOptimizeMemory" Grid.Column="2" Content="内存优化" Click="OptimizeMemoryClick" ToolTip="检查内存状态，内存不足时执行优化；需要时请求管理员权限" Margin="6,0,0,0" Style="{StaticResource Primary}"/>
+   <Button x:Name="TaskOptimizeMemory" Grid.Column="2" Content="内存优化" Click="OptimizeMemoryClick" ToolTip="手动整理内存；需要管理员权限" Margin="6,0,0,0" Style="{StaticResource Primary}"/>
   </Grid>
   <Grid Grid.Row="1" Margin="9,2,9,6"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
    <TextBlock Text="筛选" Foreground="{DynamicResource Muted}" Margin="0,0,9,0"/>

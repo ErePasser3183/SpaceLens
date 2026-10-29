@@ -233,6 +233,7 @@ public partial class MainWindow : Window
         if (result?.Store[id].IsDirectory == true) { var enter = new MenuItem { Header = "进入文件夹" }; enter.Click += (_, _) => Navigate(id); menu.Items.Add(enter); }
         var reveal = new MenuItem { Header = "在资源管理器中定位" }; reveal.Click += (_, _) => Reveal(); menu.Items.Add(reveal);
         var copy = new MenuItem { Header = "复制完整路径" }; copy.Click += (_, _) => CopyPath(); menu.Items.Add(copy);
+        AddDeletionItems(menu, id);
         menu.PlacementTarget = target; menu.IsOpen = true;
     }
     private void Reveal()

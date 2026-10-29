@@ -5,7 +5,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>SpaceLens-win-Setup</AssemblyName>
-    <Version>1.1.1</Version>
+    <Version>1.1.2</Version>
     <Product>SpaceLens</Product>
     <ApplicationIcon>../SpaceLens.App/Assets/SpaceLens.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>

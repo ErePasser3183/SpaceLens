@@ -17,17 +17,21 @@ internal static class TaskChecks
                 $"memory operation {failedCommand} failure preserves native status and stops later commands");
         }
         memoryCommands.Clear();
-        check(MemoryOptimizer.RunCommands(command => { memoryCommands.Add(command); return 0; }, () => false) == MemoryOptimizer.SkippedExitCode && memoryCommands.Count == 0,
-            "healthy memory skips all global operations");
-        int pressureReads = 0;
-        check(MemoryOptimizer.RunCommands(command => { memoryCommands.Add(command); return 0; }, () => ++pressureReads == 1) == 0 && memoryCommands.SequenceEqual(new[] { 2 }),
+        check(MemoryOptimizer.RunCommands(command => { memoryCommands.Add(command); return 0; }, () => false) == 0 && memoryCommands.SequenceEqual(new[] { 2 }),
+            "manual optimization trims even when Windows low-memory warning is not set");
+        memoryCommands.Clear();
+        check(MemoryOptimizer.RunCommands(command => { memoryCommands.Add(command); return 0; }, () => false) == 0 && memoryCommands.SequenceEqual(new[] { 2 }),
             "pressure recovery after trimming avoids forced modified-page writes");
         memoryCommands.Clear();
         bool queryError = false;
         try { MemoryOptimizer.RunCommands(command => { memoryCommands.Add(command); return 0; }, () => throw new System.ComponentModel.Win32Exception(6)); }
         catch (System.ComponentModel.Win32Exception) { queryError = true; }
-        check(queryError && memoryCommands.Count == 0, "unreadable memory pressure never triggers blind cleanup");
+        check(queryError && memoryCommands.SequenceEqual(new[] { 2 }), "unreadable pressure does not blindly flush modified pages after manual trim");
         _ = MemoryOptimizer.IsMemoryLow();
+        const ulong gib = 1024UL * 1024 * 1024;
+        check(MemoryOptimizer.NeedsFurtherCleanup(new(16 * gib, 3 * gib), false), "high memory usage is recognized before Windows emergency notification");
+        check(!MemoryOptimizer.NeedsFurtherCleanup(new(16 * gib, 8 * gib), false), "sufficient available memory avoids modified-page flushing");
+        check(MemoryOptimizer.NeedsFurtherCleanup(new(4 * gib, gib), false) && MemoryOptimizer.NeedsFurtherCleanup(null, true), "low available bytes and Windows emergency notification both request further cleanup");
         check(true, "live Windows low-memory notification can be read without modifying memory");
         using (var gate = new Mutex(false, "Local\\SpaceLens.MemoryOptimization"))
         {

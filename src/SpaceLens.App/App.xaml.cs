@@ -8,6 +8,8 @@ public partial class App : Application
     [STAThread]
     private static void Main(string[] args)
     {
+        // Prefer predictable first-frame composition over driver-specific D3D surface behavior.
+        System.Windows.Media.RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.SoftwareOnly;
         Velopack.VelopackApp.Build().SetAutoApplyOnStartup(false).Run();
         var app = new App();
         app.InitializeComponent();
@@ -40,14 +42,16 @@ public partial class App : Application
         bool inputVerify = e.Args.Length > 1 && e.Args[0] == "--verify-input";
         bool verify = e.Args.Length > 1 && e.Args[0] == "--verify-ui";
         bool taskVerify = e.Args.Length > 1 && e.Args[0] == "--verify-tasks";
-        bool verification = verify || renderVerify || menuVerify || interactionVerify || inputVerify || taskVerify;
+        bool startupVerify = e.Args.Length > 1 && e.Args[0] == "--verify-startup";
+        bool deletionVerify = e.Args.Length > 1 && e.Args[0] == "--verify-deletion";
+        bool verification = verify || renderVerify || menuVerify || interactionVerify || inputVerify || taskVerify || startupVerify || deletionVerify;
         if (!verification)
         {
             Updates = new(new SpaceLens.Updates.ReleaseUpdater(), new(SpaceLens.Updates.UpdateSettings.DefaultPath));
             updateTimer.Tick += async (_, _) => await Updates.CheckAsync();
             Exit += (_, _) => { updateTimer.Stop(); Updates.PrepareForExit(); };
         }
-        var main = new MainWindow(verify || renderVerify || menuVerify || interactionVerify || inputVerify || taskVerify ? null : e.Args.FirstOrDefault(x => !x.StartsWith("--")));
+        var main = new MainWindow(verification ? null : e.Args.FirstOrDefault(x => !x.StartsWith("--")));
         MainWindow = main;
         if (verify) main.Loaded += async (_, _) => await main.VerifyUiAsync(e.Args[1]);
         if (renderVerify) main.Loaded += async (_, _) => await main.VerifyRenderAsync(e.Args[1]);
@@ -55,7 +59,13 @@ public partial class App : Application
         if (interactionVerify) main.Loaded += async (_, _) => await main.VerifyInteractionsAsync(e.Args[1]);
         if (inputVerify) main.Loaded += async (_, _) => await main.VerifyInputAsync(e.Args[1]);
         if (taskVerify) main.Loaded += async (_, _) => await main.VerifyTasksAsync(e.Args[1]);
-        else if (!(verify || renderVerify || menuVerify || interactionVerify || inputVerify) && (e.Args.Contains("--tasks") || !e.Args.Any(x => !x.StartsWith("--")))) main.Loaded += (_, _) => main.SetTaskMode(true);
+        else if (startupVerify || !verification && (e.Args.Contains("--tasks") || !e.Args.Any(x => !x.StartsWith("--")))) main.SetTaskMode(true);
+        if (startupVerify)
+        {
+            if (!main.VerifyBeforeFirstFrame(e.Args[1])) { Shutdown(1); return; }
+            main.Loaded += async (_, _) => await main.VerifyStartupAsync(e.Args[1]);
+        }
+        if (deletionVerify) main.Loaded += async (_, _) => await main.VerifyDeletionAsync(e.Args[1]);
         main.Show();
         if (Updates is not null) _ = StartBackgroundUpdatesAsync();
     }

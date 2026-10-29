@@ -9,7 +9,7 @@ using Microsoft.Win32.SafeHandles;
 
 namespace SpaceLens.Tasks;
 
-public sealed record MemoryOptimizationResult(SystemMemory? Before, SystemMemory? After, bool Skipped = false)
+public sealed record MemoryOptimizationResult(SystemMemory? Before, SystemMemory? After)
 {
     public long? AvailableChange => Before is not null && After is not null
         ? checked((long)After.Available - (long)Before.Available) : null;
@@ -18,19 +18,16 @@ public sealed record MemoryOptimizationResult(SystemMemory? Before, SystemMemory
 /// <summary>
 /// Memory-list operations adapted from PCL Snapshot 2.99.0.0, PageOtherTest.MemoryOptimizeInternal,
 /// by 龙腾猫跃 / PCL contributors. See docs/第三方参考.md.
-/// Only act under Windows low-memory pressure; retain reusable standby pages.
+/// An explicit user request always trims working sets; retain reusable standby pages.
 /// </summary>
 public static class MemoryOptimizer
 {
     public const string HelperArgument = "--optimize-memory";
-    internal const int SkippedExitCode = 10;
     private const int BusyExitCode = 170;
 
     public static async Task<MemoryOptimizationResult> OptimizeAsync()
     {
         var before = SystemMemory.Read();
-        // No elevation or global trimming when Windows does not report low physical memory.
-        if (!IsMemoryLow()) return new(before, before, Skipped: true);
         string executable = Environment.ProcessPath ?? throw new InvalidOperationException("无法定位 SpaceLens 程序。");
         if (Path.GetFileNameWithoutExtension(executable).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("请从 SpaceLens.exe 启动后使用内存优化。");
@@ -41,7 +38,6 @@ public static class MemoryOptimizer
             WorkingDirectory = AppContext.BaseDirectory, WindowStyle = ProcessWindowStyle.Hidden
         }) ?? throw new InvalidOperationException("无法启动内存优化。"));
         await helper.WaitForExitAsync();
-        if (helper.ExitCode == SkippedExitCode) return new(before, SystemMemory.Read(), Skipped: true);
         if (helper.ExitCode == BusyExitCode) throw new InvalidOperationException("另一个窗口正在优化内存，请稍后再试。");
         if (helper.ExitCode != 0)
             throw new InvalidOperationException($"内存优化未完成（错误码 0x{helper.ExitCode:X8}）；部分步骤可能已执行。");
@@ -60,8 +56,6 @@ public static class MemoryOptimizer
             if (!acquired) return BusyExitCode;
             try
             {
-                // Recheck after the UAC prompt, since memory may have recovered while waiting.
-                if (!IsMemoryLow()) return SkippedExitCode;
                 return WithPrivilege(() => RunCommands(command => NtSetSystemInformation(80, ref command, sizeof(int)), IsMemoryLow));
             }
             finally { gate.ReleaseMutex(); }
@@ -72,7 +66,7 @@ public static class MemoryOptimizer
 
     internal static int RunCommands(Func<int, int> execute, Func<bool> isMemoryLow)
     {
-        if (!isMemoryLow()) return SkippedExitCode;
+        // The button is an explicit request: do not gate the first step on Windows' emergency warning.
         // Keep standby pages cached: they already count as available physical memory.
         // Flush modified pages only if working-set trimming did not relieve pressure.
         for (int command = 2; command <= 3; command++)
@@ -87,10 +81,15 @@ public static class MemoryOptimizer
     internal static bool IsMemoryLow()
     {
         using var notification = CreateMemoryResourceNotification(0); // LowMemoryResourceNotification.
-        if (notification.IsInvalid || !QueryMemoryResourceNotification(notification, out bool low))
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "无法读取系统内存状态。");
-        return low;
+        bool low = false;
+        bool known = !notification.IsInvalid && QueryMemoryResourceNotification(notification, out low);
+        var memory = SystemMemory.Read();
+        if (!known && memory is null) throw new Win32Exception(Marshal.GetLastWin32Error(), "无法读取系统内存状态。");
+        return NeedsFurtherCleanup(memory, low);
     }
+
+    internal static bool NeedsFurtherCleanup(SystemMemory? memory, bool windowsLow)
+        => windowsLow || memory is { Total: > 0 } && (memory.UsedPercent >= 80 || memory.Available <= 1024UL * 1024 * 1024);
 
     internal static int WithPrivilege(Func<int> action)
     {

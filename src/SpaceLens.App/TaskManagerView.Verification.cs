@@ -40,9 +40,9 @@ public partial class TaskManagerView
         await OptimizeMemoryAsync(() => Task.FromException<MemoryOptimizationResult>(new InvalidOperationException("test failure")));
         check(TaskOptimizeMemory.IsEnabled && TaskRefreshState.Text.Contains("test failure") && IsSampling,
             "optimization failure is visible and permits a later retry");
-        await OptimizeMemoryAsync(() => Task.FromResult(new MemoryOptimizationResult(new(1000, 800), new(1000, 800), Skipped: true)));
-        check(TaskOptimizeMemory.IsEnabled && TaskRefreshState.Text == "未检测到内存不足，已跳过优化" && IsSampling,
-            "unneeded optimization is reported as skipped instead of claiming memory savings");
+        await OptimizeMemoryAsync(() => Task.FromResult(new MemoryOptimizationResult(new(1000, 800), new(1000, 800))));
+        check(TaskOptimizeMemory.IsEnabled && TaskRefreshState.Text.Contains("可用内存无变化") && IsSampling,
+            "completed manual optimization reports no change without claiming a skip or fabricated savings");
         check(FormatMemoryResult(new(new(1000, 700), new(1000, 500))).Contains("减少") &&
             FormatMemoryResult(new(null, null)).Contains("暂无法读取"), "decreased and missing memory measurements are not fabricated savings");
         memoryNotice = null;
