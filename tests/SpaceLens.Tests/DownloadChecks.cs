@@ -73,6 +73,34 @@ internal static class DownloadChecks
             await changed.DownloadFile(url, changedTarget, _ => { });
             check(File.ReadAllBytes(changedTarget).SequenceEqual(changedServer.Data) && changedServer.BytesRead - before == bytes.Length,
                 "changed ETag invalidates saved parts instead of mixing releases");
+
+            string switchCache = Path.Combine(root, "version-switch"), switchTarget = Path.Combine(root, "latest.nupkg");
+            var switching = new ResumableDownloader(switchCache, client) { ExpectedSha256 = hash };
+            using var stopOld = new CancellationTokenSource();
+            try { await switching.DownloadFile(url + "/1.1.4", switchTarget, p => { if (p >= 8) stopOld.Cancel(); }, cancelToken: stopOld.Token); }
+            catch (OperationCanceledException) { }
+            string oldFolder = Directory.GetDirectories(switchCache).Single();
+            File.WriteAllText(Path.Combine(oldFolder, "unrelated.txt"), "keep");
+            string activeFolder = Path.Combine(switchCache, new string('A', 64));
+            Directory.CreateDirectory(activeFolder);
+            string activePart = Path.Combine(activeFolder, "part-0.bin");
+            File.WriteAllText(activePart, "active download");
+            using (var activeLock = new FileStream(Path.Combine(activeFolder, "download.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+            {
+                using var stopNew = new CancellationTokenSource();
+                try { await switching.DownloadFile(url + "/1.1.5", switchTarget, p => { if (p >= 8) stopNew.Cancel(); }, cancelToken: stopNew.Token); }
+                catch (OperationCanceledException) { }
+                check(!Directory.GetFiles(oldFolder, "part-*.bin").Any() && !File.Exists(Path.Combine(oldFolder, "state.json")),
+                    "new release clears abandoned older partial download and metadata");
+                check(File.ReadAllText(activePart) == "active download" && File.ReadAllText(Path.Combine(oldFolder, "unrelated.txt")) == "keep",
+                    "cache cleanup preserves locked downloads and unrelated files");
+            }
+            long retained = Directory.GetFiles(switchCache, "part-*.bin", SearchOption.AllDirectories)
+                .Where(p => p != activePart).Sum(p => new FileInfo(p).Length);
+            before = server.BytesRead;
+            await switching.DownloadFile(url + "/1.1.5", switchTarget, _ => { });
+            check(!File.Exists(activePart) && retained > 0 && server.BytesRead - before == bytes.Length - retained && File.ReadAllBytes(switchTarget).SequenceEqual(bytes),
+                "later cleanup retries unlocked stale cache while retaining current release resume bytes");
         }
         finally { Directory.Delete(root, true); }
     }

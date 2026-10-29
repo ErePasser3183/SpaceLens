@@ -51,6 +51,8 @@ public sealed class ResumableDownloader : IFileDownloader
         deadline.CancelAfter(TimeSpan.FromMinutes(timeout > 0 ? timeout : 30));
         CancellationToken token = deadline.Token;
         var remote = await RetryAsync(() => ProbeAsync(url, headers, token), token);
+        token.ThrowIfCancellationRequested();
+        ClearObsoleteDownloads(key);
         string statePath = Path.Combine(folder, "state.json");
         State? saved = null;
         try { saved = JsonSerializer.Deserialize<State>(await File.ReadAllTextAsync(statePath, token)); }
@@ -227,6 +229,35 @@ public sealed class ResumableDownloader : IFileDownloader
                 (ex is IOException or HttpRequestException or OperationCanceledException))
             { await Task.Delay(TimeSpan.FromMilliseconds(300 * (attempt + 1)), token); }
         }
+    }
+
+    private void ClearObsoleteDownloads(string currentKey)
+    {
+        // Only our fixed-name checkpoint files are disposable. Do not traverse links or
+        // remove lock files/directories: their stable identity is shared by app instances.
+        try
+        {
+            if ((File.GetAttributes(cacheRoot) & FileAttributes.ReparsePoint) != 0) return;
+            foreach (string folder in Directory.EnumerateDirectories(cacheRoot))
+            {
+                string name = Path.GetFileName(folder);
+                if (name.Equals(currentKey, StringComparison.OrdinalIgnoreCase) || name.Length != 64 || !name.All(Uri.IsHexDigit)) continue;
+                try
+                {
+                    if ((File.GetAttributes(folder) & FileAttributes.ReparsePoint) != 0) continue;
+                    string lockPath = Path.Combine(folder, "download.lock");
+                    if (!File.Exists(lockPath) || (File.GetAttributes(lockPath) & FileAttributes.ReparsePoint) != 0) continue;
+                    using var obsoleteLock = new FileStream(lockPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                    foreach (string file in new[] { "part-0.bin", "part-1.bin", "part-2.bin", "part-3.bin", "state.json", "state.json.tmp", "assembled.tmp" })
+                    {
+                        string path = Path.Combine(folder, file);
+                        if (File.Exists(path) && (File.GetAttributes(path) & FileAttributes.ReparsePoint) == 0) File.Delete(path);
+                    }
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* Active or inaccessible cache: retry next download. */ }
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* Cache housekeeping must never block an update. */ }
     }
 
     private static string PartPath(string folder, int i) => Path.Combine(folder, $"part-{i}.bin");

@@ -1,4 +1,4 @@
-﻿param([string]$Version = '1.1.3', [string]$OutputDirectory = 'dist\Releases')
+﻿param([string]$Version = '1.1.4', [string]$OutputDirectory = 'dist\Releases')
 $ErrorActionPreference = 'Stop'
 if ($Version -notmatch '^\d+\.\d+\.\d+(-[A-Za-z0-9.-]+)?$') { throw '版本号格式无效。' }
 . (Join-Path $PSScriptRoot 'scripts\environment.ps1')
