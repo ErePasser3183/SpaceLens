@@ -4,6 +4,13 @@ using System.Security.Principal;
 using System.Text.Json;
 using SpaceLens.Core;
 
+if (args.Length == 5 && args[0] == "--download-fixture")
+{
+    var downloader = new SpaceLens.Updates.ResumableDownloader(args[2]) { ExpectedSha256 = args[4] };
+    await downloader.DownloadFile(args[1], args[3], _ => { });
+    return;
+}
+
 if (args.Length == 3 && args[0] == "--verify-update-package")
 {
     await UpdatePackageChecks.VerifyDownload(args[1], args[2]);
@@ -305,4 +312,6 @@ File.SetAttributes(Path.Combine(fixture, "hidden.dat"), FileAttributes.Normal);
 Directory.Delete(fixture, true);
 await TaskChecks.Run(Check);
 await UpdateChecks.Run(Check);
+await DownloadChecks.Run(Check);
+await DownloadRestartChecks.Run(Check);
 Console.WriteLine($"ALL {passed} CHECKS PASSED");

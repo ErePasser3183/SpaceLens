@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType><TargetFramework>net9.0-windows</TargetFramework><UseWPF>true</UseWPF>
     <AssemblyName>SpaceLens</AssemblyName><RootNamespace>SpaceLens.App</RootNamespace>
-    <Version>1.1.2</Version><ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>1.1.3</Version><ApplicationManifest>app.manifest</ApplicationManifest>
     <StartupObject>SpaceLens.App.App</StartupObject>
     <Product>SpaceLens</Product><Title>SpaceLens</Title>
     <ApplicationIcon>Assets\SpaceLens.ico</ApplicationIcon>

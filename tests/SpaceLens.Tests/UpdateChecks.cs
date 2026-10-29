@@ -42,7 +42,7 @@ internal static class UpdateChecks
 
             backend = new FakeUpdater { PendingVersion = "1.2.0" }; service = new(backend, new(Path.Combine(root, "fifth.json")));
             await service.CheckAsync(); service.PrepareForExit();
-            check(backend.Checks == 0 && backend.Downloads == 0 && backend.Applies == 1, "verified pending package can be applied after a later normal session");
+            check(backend.Checks == 1 && backend.Downloads == 0 && backend.Applies == 1, "startup checks server even with a verified pending package and reuses that package");
 
             backend = new FakeUpdater { Gate = new(TaskCreationOptions.RunContinuationsAsynchronously) };
             service = new(backend, new(Path.Combine(root, "sixth.json")));
@@ -52,6 +52,17 @@ internal static class UpdateChecks
             File.WriteAllText(Path.Combine(root, "corrupt.json"), "bad json");
             service = new(new FakeUpdater(), new(Path.Combine(root, "corrupt.json")));
             check(!service.Automatic, "corrupt preferences do not silently re-enable automatic updates");
+
+            backend = new FakeUpdater(); service = new(backend, new(Path.Combine(root, "startup.json")));
+            var states = new List<string>(); service.Changed += () => states.Add(service.Status);
+            await service.CheckOnStartupAsync(); await service.CheckOnStartupAsync();
+            check(backend.Checks == 1 && states.Any(s => s.Contains("50%")), "first rendered session checks once and exposes download progress");
+            var nextSession = new UpdateService(backend, new(Path.Combine(root, "startup.json")));
+            await nextSession.CheckOnStartupAsync();
+            check(backend.Checks == 2, "each new application session checks again even when a package is already ready");
+            service = new(new FakeUpdater(), new(Path.Combine(root, "settings.json")));
+            await service.CheckOnStartupAsync();
+            check(!service.Busy && !service.Automatic, "startup continues to respect the saved automatic-update switch");
         }
         finally { Directory.Delete(root, recursive: true); }
     }
@@ -63,11 +74,13 @@ internal static class UpdateChecks
         public string? PendingVersion { get; set; }
         public int Checks, Downloads, Applies;
         public bool Failure;
+        public event Action<int>? DownloadProgressChanged;
         public TaskCompletionSource? Gate;
         public Task<string?> CheckAsync(CancellationToken cancellation) { Checks++; return Task.FromResult<string?>("1.2.0"); }
         public async Task DownloadAsync(CancellationToken cancellation)
         {
             Downloads++;
+            DownloadProgressChanged?.Invoke(50);
             if (Failure) throw new IOException("checksum mismatch");
             if (Gate is not null) await Gate.Task.WaitAsync(cancellation);
             cancellation.ThrowIfCancellationRequested();

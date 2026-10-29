@@ -294,7 +294,7 @@ public partial class MainWindow : Window
         Alt+← / Alt+→　后退 / 前进
         Alt+↑ / Alt+Home　返回全部进程
 
-        内存优化功能参考了龙腾猫跃的 PCL2 启动器中的相关功能。
+        内存优化与下载功能参考了龙腾猫跃的 PCL2 启动器中的相关模块。
         """ : """
         Ctrl+F　搜索
         F5　重新扫描

@@ -66,15 +66,22 @@ public partial class App : Application
             main.Loaded += async (_, _) => await main.VerifyStartupAsync(e.Args[1]);
         }
         if (deletionVerify) main.Loaded += async (_, _) => await main.VerifyDeletionAsync(e.Args[1]);
+        if (Updates is not null)
+        {
+            main.ContentRendered += CheckAfterFirstFrame;
+            void CheckAfterFirstFrame(object? source, EventArgs args)
+            {
+                main.ContentRendered -= CheckAfterFirstFrame;
+                _ = StartBackgroundUpdatesAsync();
+            }
+        }
         main.Show();
-        if (Updates is not null) _ = StartBackgroundUpdatesAsync();
     }
 
     private async Task StartBackgroundUpdatesAsync()
     {
-        await Task.Delay(TimeSpan.FromSeconds(15));
-        if (MainWindow?.IsVisible != true || Updates is null) return;
-        await Updates.CheckAsync();
+        if (Updates is null) return;
+        await Updates.CheckOnStartupAsync();
         if (MainWindow?.IsVisible == true) updateTimer.Start();
     }
 }

@@ -11,10 +11,12 @@ internal static class UpdatePackageChecks
         Directory.CreateDirectory(output);
         var locator = new TestVelopackLocator("SpaceLens", "1.0.0", Path.Combine(output, "packages"),
             output, output, Path.Combine(output, "Update.exe"), "win");
+        var downloader = new SpaceLens.Updates.ResumableDownloader(Path.Combine(output, "download-parts"));
         var manager = source == "github"
-            ? new UpdateManager(new GithubSource(SpaceLens.Updates.ReleaseUpdater.RepositoryUrl, null, false), locator: locator)
+            ? new UpdateManager(new GithubSource(SpaceLens.Updates.ReleaseUpdater.RepositoryUrl, null, false, downloader), locator: locator)
             : new UpdateManager(source, locator: locator);
         var offer = await manager.CheckForUpdatesAsync() ?? throw new Exception("No newer release found.");
+        downloader.ExpectedSha256 = offer.TargetFullRelease.SHA256;
         await manager.DownloadUpdatesAsync(offer);
         var pending = manager.UpdatePendingRestart ?? throw new Exception("Downloaded package is not ready.");
         string file = Path.Combine(locator.PackagesDir!, pending.FileName);

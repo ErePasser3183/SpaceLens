@@ -19,7 +19,7 @@ public partial class MainWindow
         AddSection("更新");
         var updates = ((App)Application.Current).Updates;
         var automatic = new MenuItem { Header = "自动更新", IsCheckable = true, IsChecked = updates?.Automatic ?? true,
-            IsEnabled = updates?.Available == true, ToolTip = "后台下载，关闭程序后更新，下次启动生效" };
+            IsEnabled = updates?.Available == true, ToolTip = "每次启动检查；未下载完时保留进度，下次继续；下载完成后关闭程序更新" };
         automatic.Click += async (_, _) =>
         {
             if (updates is null) return;

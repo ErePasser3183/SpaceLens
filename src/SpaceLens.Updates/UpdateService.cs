@@ -8,6 +8,8 @@ public sealed class UpdateService
     private readonly object gate = new();
     private CancellationTokenSource? operation;
     private bool busy, closing, applyPending;
+    private bool startupChecked;
+    private string? downloadingVersion;
     private int generation;
     public string Status { get; private set; } = "尚未检查更新";
     public bool Automatic => settings.Automatic;
@@ -20,8 +22,27 @@ public sealed class UpdateService
     {
         this.updater = updater; this.settings = settings;
         settings.Load();
+        updater.DownloadProgressChanged += percent =>
+        {
+            lock (gate)
+            {
+                if (closing || !busy || operation?.IsCancellationRequested != false || downloadingVersion is null) return;
+                Status = $"正在后台下载 {downloadingVersion} · {percent}%";
+            }
+            Changed?.Invoke();
+        };
         if (!Available) Status = "此版本未打包，请使用正式发布版";
         else if (!Automatic) Status = "自动更新已关闭";
+    }
+
+    public Task CheckOnStartupAsync()
+    {
+        lock (gate)
+        {
+            if (startupChecked) return Task.CompletedTask;
+            startupChecked = true;
+        }
+        return CheckAsync();
     }
 
     public void SetAutomatic(bool enabled)
@@ -48,31 +69,33 @@ public sealed class UpdateService
         }
         try
         {
-            if (updater.PendingVersion is { } pending)
+            SetStatus("正在检查更新…");
+            string? next = await updater.CheckAsync(cancellation.Token);
+            cancellation.Token.ThrowIfCancellationRequested();
+            if (updater.PendingVersion is { } pending && (next is null || next == pending))
             {
                 Ready(pending, version);
                 return;
             }
-            SetStatus("正在检查更新…");
-            string? next = await updater.CheckAsync(cancellation.Token);
-            cancellation.Token.ThrowIfCancellationRequested();
             if (next is null) { SetStatus("已是最新版本"); return; }
+            lock (gate) downloadingVersion = next;
             SetStatus($"正在后台下载 {next}…");
             await updater.DownloadAsync(cancellation.Token);
             cancellation.Token.ThrowIfCancellationRequested();
             if (updater.PendingVersion is not { } downloaded) throw new IOException("更新包未就绪。");
             Ready(downloaded, version);
         }
-        catch (OperationCanceledException) { SetStatus(Automatic ? "更新已取消，稍后重试" : "自动更新已关闭"); }
+        catch (OperationCanceledException) { SetStatus(Automatic ? "下载进度已保留，下次继续" : "自动更新已关闭，下载进度已保留"); }
         catch (Exception ex)
         {
             // Update failures never interrupt scanning or process monitoring.
             System.Diagnostics.Debug.WriteLine(ex);
-            SetStatus("更新暂不可用，可稍后重试");
+            if (updater.PendingVersion is { } pending) Ready(pending, version);
+            else SetStatus("更新暂不可用，已保存的进度将在重试时继续");
         }
         finally
         {
-            lock (gate) { busy = false; operation = null; }
+            lock (gate) { busy = false; operation = null; downloadingVersion = null; }
             cancellation.Dispose();
             Changed?.Invoke();
         }
